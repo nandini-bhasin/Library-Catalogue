@@ -209,6 +209,18 @@ function getByName(bookTitle) {
 }
 
 
+//To trigger button click on enter key press
+document.getElementById("bookId").addEventListener("keypress", function(event) {
+    // Number 13 is the "Enter" key on the keyboard
+    if (event.keyCode === 13) {
+        event.preventDefault();
+      // Trigger the button element with a click
+      document.getElementById("searchBtn").click();
+    }
+  });
+  
+
+
 
 
 //Function to add in a new book
@@ -230,29 +242,39 @@ function addNewBook() {
         "available": document.getElementById("available").checked
     };
 
-    xhttp.open('POST', 'http://localhost:3000/books');
-    xhttp.setRequestHeader('Content-type', 'application/json');
-    xhttp.send(JSON.stringify(params));
-    xhttp.onload = function(){
-        if(this.readyState == 4 && this.status == 200){
-            url = JSON.parse(this.responseText);
+    if (validity(document.getElementById("title")) && 
+        validity(document.getElementById("author")) &&
+        validity(document.getElementById("rating")) &&
+        validity(document.getElementById("image"))) {
 
-            //resetting values of the modal form
-            document.getElementById("title").value = '';
-            document.getElementById("author").value = '';
-            document.getElementById("price").value = '';
-            document.getElementById("publisher").value = '';
-            document.getElementById("image").value = '';
-            document.getElementById("rating").value = '';
-            document.getElementById("desc").value = '';
-            document.getElementById("genre").value = '';
-            document.getElementById("language").value = '';
-            document.getElementById("paperback").checked = false;
-            document.getElementById("available").checked = false;
 
-            mainPage();
-        }    
+        xhttp.open('POST', 'http://localhost:3000/books');
+        xhttp.setRequestHeader('Content-type', 'application/json');
+        xhttp.send(JSON.stringify(params));
+        xhttp.onload = function(){
+            if(this.readyState == 4 && this.status == 200){
+                url = JSON.parse(this.responseText);
+
+                //resetting values of the modal form
+                document.getElementById("title").value = '';
+                document.getElementById("author").value = '';
+                document.getElementById("price").value = '';
+                document.getElementById("publisher").value = '';
+                document.getElementById("image").value = '';
+                document.getElementById("rating").value = '';
+                document.getElementById("desc").value = '';
+                document.getElementById("genre").value = '';
+                document.getElementById("language").value = '';
+                document.getElementById("paperback").checked = false;
+                document.getElementById("available").checked = false;
+
+                mainPage();
+            }    
+        }
+
     }
+
+    
 }
 
 
@@ -317,41 +339,49 @@ function addNewComment() {
         "rating": document.getElementById("commentRating").value
     };
 
-    if(url.reviews) {
-        //append new reviews in old ones
-        url.reviews.unshift(params);
-        params = {
-            "rev": url.reviews
+    //check of any field empty
+    if (validity(document.getElementById("user")) &&
+        validity(document.getElementById("body"))) {
+
+
+        if(url.reviews) {
+            //append new reviews in old ones
+            url.reviews.unshift(params);
+            params = {
+                "rev": url.reviews
+            }
+            
+    
         }
-        
-
-    }
-    else {
-        //create an array and append params in it
-        var rev = [];
-        rev.push(params);
-        params = {
-            "rev": rev
+        else {
+            //create an array and append params in it
+            var rev = [];
+            rev.push(params);
+            params = {
+                "rev": rev
+            }
+            url.reviews = rev;
         }
-        url.reviews = rev;
+    
+        //call put request and send appended reviews
+        var bookIDUrl = 'http://localhost:3000/books/' + url._id;
+        xhttp.open('PUT', bookIDUrl);
+        xhttp.setRequestHeader('Content-type', 'application/json');
+        xhttp.send(JSON.stringify(params));
+        xhttp.onload = function(){
+            if(this.readyState == 4 && this.status == 200){
+                url = JSON.parse(this.responseText);
+    
+                displayCommentSection();
+            }    
+        }
+        document.getElementById("user").value = '';
+        document.getElementById("subject").value = '';
+        document.getElementById("body").value = '';
+        document.getElementById("commentRating").value = '';
+
     }
 
-    //call put request and send appended reviews
-    var bookIDUrl = 'http://localhost:3000/books/' + url._id;
-    xhttp.open('PUT', bookIDUrl);
-    xhttp.setRequestHeader('Content-type', 'application/json');
-    xhttp.send(JSON.stringify(params));
-    xhttp.onload = function(){
-        if(this.readyState == 4 && this.status == 200){
-            url = JSON.parse(this.responseText);
-
-            displayCommentSection();
-        }    
-    }
-    document.getElementById("user").value = '';
-    document.getElementById("subject").value = '';
-    document.getElementById("body").value = '';
-    document.getElementById("commentRating").value = '';
 }
 
 
@@ -420,3 +450,15 @@ function validate(name, roll) {
         return false;
     return true;
 }
+
+
+
+
+//To check for empty fields, kinda like required for HTML form
+function validity(obj) {
+    if (!obj.checkValidity()) {
+      alert("Please fill out "+obj.id+" field");
+      return false;
+    }
+    return true;
+  }
